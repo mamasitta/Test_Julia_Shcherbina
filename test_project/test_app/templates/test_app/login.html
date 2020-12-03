@@ -1,0 +1,36 @@
+
+<!DOCTYPE html>
+{% load static %}
+
+
+<html>
+    <head>
+        <style>{% block style %}{% endblock %}</style>
+        <link href="{% static 'css/styles.css' %}" type="text/css" rel="stylesheet">
+        <meta charset="UTF-8">
+        <title>{% block title %}{% endblock %}</title>
+    </head>
+    <header></header>
+    <body >
+    <h4 align="center" style="color:red;">{{ message }}</h4>
+        <div class="loginBox">
+            <div class="loginText">Login</div>
+
+            <form class="login" method="post" id="login" action="">
+                {% csrf_token %}
+                <div class="loginInputUsername">
+                    <input placeholder="Username"  id="username" type="text" name="username" >
+                </div>
+                <div>
+                    <input placeholder="Password" class="loginInput" id="password" type="text" name="password">
+                 </div>
+                <div>
+                    <button type="submit" class="buttonLogin">Login</button>
+                </div>
+            </form>
+
+        </div>
+
+    </body>
+<footer></footer>
+</html>

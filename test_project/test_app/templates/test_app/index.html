@@ -1,0 +1,39 @@
+{% extends "test_app/layout.html" %}
+{% block title %}{% endblock %}
+
+{% block body %}
+<div >
+    <div class="container" style="margin-top: 5%">
+            <div class="box" style="display: inline-block; margin-left:10%;">
+                <h2 >Data schemas</h2>
+            </div>
+            <div class="box" style="display: inline-block;">
+                <a  href="{% url 'create_schema' %}"><button class="buttonNewSchema">New schema</button></a>
+            </div>
+    </div>
+    <div style="margin-left: 10%">
+        <table id="schema_show_table">
+            <tr>
+                <th>#</th>
+                <th>Title</th>
+                <th>Modified</th>
+                <th colspan="2">Actions</th>
+            </tr>
+            {% for schema in user_schemas %}
+
+                <tr>
+                    <td>{{ linenumbers }}</td>
+                    <td style="color: blue">{{ schema.file_name }}</td>
+                    <td>{{ schema.date|date:"SHORT_DATE_FORMAT" }}</td>
+                    <td><a href="{% url 'data_sets' %}"><h7 class="edit">Edit schema</h7></a></td>
+                    <td><a href="{% url 'schema_delete' schema.id %}"><h7 class="delete">Delete</h7></a></td>
+
+                </tr>
+
+            {% endfor %}
+        </table>
+
+    </div>
+</div>
+
+{% endblock %}
