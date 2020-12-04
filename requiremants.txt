@@ -1,4 +1,6 @@
 redis
 celery
 Django
+gunicorn
+django-heroku
 
