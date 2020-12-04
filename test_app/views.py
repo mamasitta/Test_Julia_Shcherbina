@@ -44,6 +44,7 @@ def schema_delete(request, schema_id):
 def create_schema(request):
     user_id = request.user.id
     if request.method == 'POST':
+        # registering dialect for csv
         column_separator = request.POST.get('column_separator')
         string_character = request.POST.get('string_character')
         if column_separator == "Semicolon(;)":
@@ -61,28 +62,36 @@ def create_schema(request):
                 csv.register_dialect('myDialect', delimiter=',', quotechar='"', quoting=csv.QUOTE_NONNUMERIC)
             else:
                 csv.register_dialect('myDialect', delimiter=',', quotechar="'", quoting=csv.QUOTE_NONNUMERIC)
+        # processing data for csv
         schema_name = request.POST.get('name')
         add_number = int(request.POST.get('add_number'))
-        data_to_file = [["Column name", "Order", "Type", "Range from", "Range to"]]
+        data_to_file = []
+        for i in range(add_number*3):
+            data_to_file.append("remove")
         for i in range(add_number):
             name = request.POST.get('name{}'.format(i))
             order = request.POST.get('order{}'.format(i))
+            if not order:
+                order =len(data_to_file)
             type = request.POST.get('type{}'.format(i))
             if type == "Integer":
                 range_from = request.POST.get('range_from{}'.format(i))
                 range_to = request.POST.get('range_till{}'.format(i))
-                new_line = [name, order, type, range_from, range_to]
-                data_to_file.append(new_line)
+                data_to_file.insert(int(order), name)
+                data_to_file.insert(int(order)+1, range_from)
+                data_to_file.insert(int(order)+2, range_to)
+                print(data_to_file)
             else:
-                new_line = [name, order, type]
-                data_to_file.append(new_line)
-        filepath = 'media/uploads/{}.csv'.format(schema_name)
-        with open(filepath, "w") as file:
+                print(data_to_file)
+                data_to_file.insert(int(order), name)
+        data_to = ([s for s in data_to_file if s != 'remove'])
+        file_path = 'media/uploads/{}.csv'.format(schema_name)
+        with open(file_path, "w") as file:
             writer = csv.writer(file, dialect='myDialect')
-            writer.writerows(data_to_file)
+            writer.writerow(data_to)
         file.closed
-        new_file_ibj = CsvStorage(file=filepath, user_create_id=user_id, file_name=schema_name, file_path=filepath)
-        new_file_ibj.save()
+        new_file_obj = CsvStorage(user_create_id=user_id, file_name=schema_name, file_path=file_path)
+        new_file_obj.save()
         return redirect("index")
     return render(request, "test_app/crete_schema.html", {"user": request.user.username})
 
