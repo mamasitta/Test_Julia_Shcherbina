@@ -77,6 +77,7 @@ def create_schema(request):
                 data_to_file.insert(int(order), name)
         # removing extra created items
         data_to = ([s for s in data_to_file if s != 'remove'])
+        data_to = ([s for s in data_to if s is not None])
         check_name = Schema.objects.filter(schema_name=schema_name, user_create_id=user_id)
         # check schema name if exist add +1
         if check_name:
