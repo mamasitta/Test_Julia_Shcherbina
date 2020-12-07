@@ -14,7 +14,7 @@
     <header>
         <div class="navbar">
             <div class="navbFakeCSV">FakeCSV</div>
-            <div class="navSchema">Schemas</div>
+            <a  href="{% url 'index' %}"><h5 class="navLogout">Schema</h5></a>
             <div class="navHelloUser">Hello, {{ request.user.username }}</div>
             <a  href="{% url 'logout' %}"><h5 class="navLogout">Logout</h5></a>
         </div>

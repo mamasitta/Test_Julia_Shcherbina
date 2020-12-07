@@ -23,8 +23,8 @@
 
                 <tr>
                     <td>{{ linenumbers }}</td>
-                    <td style="color: blue">{{ schema.file_name }}</td>
-                    <td>{{ schema.date|date:"SHORT_DATE_FORMAT" }}</td>
+                    <td style="color: blue">{{ schema.schema_name }}</td>
+                    <td>{{ schema.created|date:"SHORT_DATE_FORMAT" }}</td>
                     <td><a href="{% url 'data_sets' %}"><h7 class="edit">Edit schema</h7></a></td>
                     <td><a href="{% url 'schema_delete' schema.id %}"><h7 class="delete">Delete</h7></a></td>
 

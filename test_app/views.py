@@ -1,8 +1,16 @@
+import ast
 import csv
 import os
+from ast import literal_eval
+from datetime import date
 from io import StringIO
 from os.path import join
 
+from rest_framework import status
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+
+from tes_project.celery import creation_task
 from django.contrib import auth
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
@@ -13,27 +21,26 @@ from django.http import HttpResponse
 # Create your views here.
 
 # main page
-
-from .models import CsvStorage
+from test_app.helpers.csv import to_list
+from .models import Schema
 
 
 @login_required
 def index(request):
-    user_schemas = CsvStorage.objects.all()
+    user_schemas = Schema.objects.all()
     counter = []
     for i in range(len(user_schemas)):
         counter.append(i + 1)
-
     return render(request, "test_app/index.html", {"user_schemas": user_schemas, "counter": counter})
 
 
+@login_required
 def schema_delete(request, schema_id):
     if schema_id != 0:
-
-        schema = CsvStorage.objects.get(id=schema_id)
+        # deleting from db
+        schema = Schema.objects.get(id=schema_id)
         schema_path = schema.file_path
-        print(schema_path)
-
+        # deleting from media
         os.remove(r"{}".format(schema_path))
         schema.delete()
         return redirect('index')
@@ -44,56 +51,120 @@ def schema_delete(request, schema_id):
 def create_schema(request):
     user_id = request.user.id
     if request.method == 'POST':
-        # registering dialect for csv
+        # processing data for csv
         column_separator = request.POST.get('column_separator')
         string_character = request.POST.get('string_character')
-        if column_separator == "Semicolon(;)":
-            if string_character == 'Double-quote(")':
-                csv.register_dialect('myDialect', delimiter=';', quotechar='"', quoting=csv.QUOTE_NONNUMERIC)
-            else:
-                csv.register_dialect('myDialect', delimiter=';', quotechar="'", quoting=csv.QUOTE_NONNUMERIC)
-        elif column_separator == "Slash(/)":
-            if string_character == 'Double-quote(")':
-                csv.register_dialect('myDialect', delimiter='/', quotechar='"', quoting=csv.QUOTE_NONNUMERIC)
-            else:
-                csv.register_dialect('myDialect', delimiter='/', quotechar="'", quoting=csv.QUOTE_NONNUMERIC)
-        else:
-            if string_character == 'Double-quote(")':
-                csv.register_dialect('myDialect', delimiter=',', quotechar='"', quoting=csv.QUOTE_NONNUMERIC)
-            else:
-                csv.register_dialect('myDialect', delimiter=',', quotechar="'", quoting=csv.QUOTE_NONNUMERIC)
-        # processing data for csv
         schema_name = request.POST.get('name')
         add_number = int(request.POST.get('add_number'))
         data_to_file = []
-        for i in range(add_number*3):
+        # creating list and inserting it with max items (if all integers each need 3 column)
+        for i in range(add_number * 3):
             data_to_file.append("remove")
+        # get data for csv (names created by java script)
         for i in range(add_number):
             name = request.POST.get('name{}'.format(i))
             order = request.POST.get('order{}'.format(i))
             if not order:
-                order =len(data_to_file)
+                order = len(data_to_file)
             type = request.POST.get('type{}'.format(i))
             if type == "Integer":
                 range_from = request.POST.get('range_from{}'.format(i))
                 range_to = request.POST.get('range_till{}'.format(i))
                 data_to_file.insert(int(order), name)
-                data_to_file.insert(int(order)+1, range_from)
-                data_to_file.insert(int(order)+2, range_to)
-                print(data_to_file)
+                data_to_file.insert(int(order) + 1, range_from)
+                data_to_file.insert(int(order) + 2, range_to)
             else:
-                print(data_to_file)
                 data_to_file.insert(int(order), name)
+        # removing extra created items
         data_to = ([s for s in data_to_file if s != 'remove'])
-        file_path = 'media/uploads/{}.csv'.format(schema_name)
-        with open(file_path, "w") as file:
-            writer = csv.writer(file, dialect='myDialect')
-            writer.writerow(data_to)
-        file.closed
-        new_file_obj = CsvStorage(user_create_id=user_id, file_name=schema_name, file_path=file_path)
-        new_file_obj.save()
-        return redirect("index")
+        check_name = Schema.objects.filter(schema_name=schema_name, user_create_id=user_id)
+        # check schema name if exist add +1
+        if check_name:
+            was_duplicate = "{}(1)".format(schema_name)
+            check_was_duplicate = Schema.objects.filter(schema_name=was_duplicate, user_create_id=user_id)
+            if check_was_duplicate:
+                for i in range(100):
+                    checking_index = "{}({})".format(schema_name, i + 2)
+                    print(checking_index)
+                    print(i)
+                    exist = Schema.objects.filter(schema_name=checking_index, user_create_id=user_id)
+                    if not exist:
+                        schema_name = checking_index
+                        break
+            else:
+                schema_name = was_duplicate
+        today = date.today()
+        user_schemas = Schema.objects.all()
+        return render(request, "test_app/data_sets.html", {"user_schemas": user_schemas, "data_to": data_to,
+                                                           "schema_name": schema_name,
+                                                           "column_separator": column_separator,
+                                                           "string_character": string_character, "today": today})
     return render(request, "test_app/crete_schema.html", {"user": request.user.username})
+
+
+@login_required
+def data_sets(request):
+    user_id = request.user.id
+    user_schemas = Schema.objects.all()
+    return render(request, "test_app/data_sets.html", {"user_schemas": user_schemas})
+
+
+@api_view(['POST'])
+@login_required
+def generate_data(request):
+    data = request.data
+    # processing data from get request
+    d = data['data_to']
+    data_to = to_list(d)
+    print(data_to)
+    schema_name = data['name']
+    string_character = data['string_character']
+    column_separator = data['column_separator']
+    # registering dialect for csv
+    if column_separator == "Semicolon(;)":
+        if string_character == 'Double-quote(")':
+            csv.register_dialect('myDialect', delimiter=';', quotechar='"', quoting=csv.QUOTE_NONNUMERIC)
+        else:
+            csv.register_dialect('myDialect', delimiter=';', quotechar="'", quoting=csv.QUOTE_NONNUMERIC)
+    elif column_separator == "Slash(/)":
+        if string_character == 'Double-quote(")':
+            csv.register_dialect('myDialect', delimiter='/', quotechar='"', quoting=csv.QUOTE_NONNUMERIC)
+        else:
+            csv.register_dialect('myDialect', delimiter='/', quotechar="'", quoting=csv.QUOTE_NONNUMERIC)
+    else:
+        if string_character == 'Double-quote(")':
+            csv.register_dialect('myDialect', delimiter=',', quotechar='"', quoting=csv.QUOTE_NONNUMERIC)
+        else:
+            csv.register_dialect('myDialect', delimiter=',', quotechar="'", quoting=csv.QUOTE_NONNUMERIC)
+    # call Celery to write csv
+    file_path = 'media/uploads/{}.csv'.format(schema_name)
+    creation_task.run(data_to=data_to, file_path=file_path, dialect='myDialect')
+    content = {"massage": 'created'}
+    # saving to db data
+    new_user_schema = Schema(user_create_id=request.user.id, schema=data_to, schema_name=schema_name, generated=True,
+                             modified=date.today(), file_path=file_path)
+    new_user_schema.save()
+    return Response(content, status=status.HTTP_200_OK)
+
+
+@login_required
+def download_schema(request, schema_name):
+    user_id = request.user.id
+    # taking data from db to download
+    schema_to_download = Schema.objects.get(user_create_id=user_id, schema_name=schema_name)
+    # creating name for file from name and date
+    today = date.today()
+    file = 'filename="{}{}.csv"'.format(schema_name, today)
+    # processing data for csv
+    s = schema_to_download.schema
+    schema = to_list(s)
+    # writing csv
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename={}'.format(file)
+    writer = csv.writer(response)
+    writer.writerow(schema)
+
+    return response
 
 
 def logout_view(request):
@@ -117,18 +188,4 @@ def login(request):
     return render(request, "test_app/login.html")
 
 
-@login_required
-def data_sets(request):
-    return render(request, "test_app/data_sets.html")
 
-
-def some_view(request):
-    # Create the HttpResponse object with the appropriate CSV header.
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; filename="somefilename.csv"'
-
-    writer = csv.writer(response)
-    writer.writerow(['First row', 'Foo', 'Bar', 'Baz'])
-    writer.writerow(['Second row', 'A', 'B', 'C', '"Testing"', "Here's a quote"])
-
-    return response

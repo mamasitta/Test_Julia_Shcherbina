@@ -191,3 +191,15 @@ padding-bottom: 12px;
 text-align: left;
 color: rgba(0, 0, 0, 0.8);
 }
+.status{
+background: #5CB85C;
+color: #FFFFFF;
+    border: 1px solid #0275D8;
+    box-sizing: border-box;
+    border-radius: 4px;
+    width: 100px;
+    height: 38px;
+    margin: 10px;
+    margin-left: 600%;
+    display: inline-block;
+}

@@ -3,4 +3,5 @@ celery
 Django
 gunicorn
 django-heroku
+djangorestframework
 
