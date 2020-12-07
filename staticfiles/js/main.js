@@ -85,3 +85,51 @@ function DeleteColumn(btn) {
     row.parentNode.remove(row);
 
 }
+
+function getProgressCod(){
+    var data_to = document.getElementById('data_to').value
+    var name = document.getElementById('schema_name').value
+    var column_separator = document.getElementById('column_separator').value
+    var string_character = document.getElementById('string_character').value
+    var token = document.getElementsByName('csrfmiddlewaretoken')[0].value
+
+    var body_of_request = {
+        "data_to": data_to,
+        "name": name,
+        "column_separator" : column_separator,
+        "string_character": string_character,
+    }
+    function fetchRequest () {
+        fetch('generate_data', {
+            method: 'post',
+            headers:{
+                "X-CSRFToken": token,
+                "Content-Type": "application/json; charset=UTF-8" ,
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            body: JSON.stringify(body_of_request)
+        })
+  .then(response => {
+        console.log(response.json())
+      return response
+
+  })
+  .then(data => {
+        if (data.status === 200){
+            console.log(data)
+            var sButton = document.getElementById('new_schema_index');
+            sButton.setAttribute("style", "background: #5CB85C; color: #FFFFFF;");
+            sButton.innerHTML = "Ready";
+
+            var newHref = document.getElementById('new_schema_download');
+            newHref.setAttribute("href", "download_schema/"+name);
+            console.log("href","download_schema/"+name+"'")
+            newHref.innerText = "Download";
+            newHref.setAttribute("style", "color: blue;");
+        }
+
+        })
+        }
+        fetchRequest()
+        }
