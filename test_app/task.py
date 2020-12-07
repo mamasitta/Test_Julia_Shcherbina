@@ -3,11 +3,10 @@ from __future__ import absolute_import, unicode_literals
 import csv
 import os
 
-from celery import shared_task
+from celery import shared_task, app
 
 from tes_project import celery
 
-app = celery.Celery('example')
 app.conf.update(BROKER_URL=os.environ['REDIS_URL'],
                 CELERY_RESULT_BACKEND=os.environ['REDIS_URL'])
 
@@ -20,6 +19,3 @@ def creation_task(file_path, data_to, delimiter, quotechar):
         writer.writerow(data_to)
     file.closed
     return file_path
-
-
-
