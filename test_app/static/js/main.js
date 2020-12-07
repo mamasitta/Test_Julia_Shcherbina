@@ -101,7 +101,7 @@ function getProgressCod(){
     }
     params = "/?data_to="+data_to+"&name="+name+"&column_separator="+column_separator+"&string_character="+string_character
     function fetchRequest () {
-        fetch('testjulishcherbina.herokuapp.com/generate_data'+params, {
+        fetch('https://testjulishcherbina.herokuapp.com/generate_data'+params, {
             method: 'get',
             headers:{
                 "X-CSRFToken": token,
