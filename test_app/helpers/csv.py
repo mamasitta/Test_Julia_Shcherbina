@@ -2,7 +2,6 @@ import csv
 
 
 def to_list(param):
-    param = "['QLetty', 'get_all', 'julia']"
     s = param.strip("][")
     s1 = s.strip('""')
     formatted = s1.split(', ')

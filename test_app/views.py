@@ -112,11 +112,10 @@ def data_sets(request):
 @api_view(['POST', 'GET'])
 @login_required
 def generate_data(request):
-    data = request.data
+    data = request.GET
     # processing data from get request
     d = data['data_to']
     data_to = to_list(d)
-    print(data_to)
     schema_name = data['name']
     string_character = data['string_character']
     column_separator = data['column_separator']

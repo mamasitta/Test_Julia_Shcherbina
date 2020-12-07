@@ -99,16 +99,17 @@ function getProgressCod(){
         "column_separator" : column_separator,
         "string_character": string_character,
     }
+    params = "/?data_to="+data_to+"&name="+name+"&column_separator="+column_separator+"&string_character="+string_character
     function fetchRequest () {
-        fetch('generate_data', {
-            method: 'post',
+        fetch('http://127.0.0.1:8000/generate_data'+params, {
+            method: 'get',
             headers:{
                 "X-CSRFToken": token,
                 "Content-Type": "application/json; charset=UTF-8" ,
                 'Accept': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest',
             },
-            body: JSON.stringify(body_of_request)
+//            body: JSON.stringify(body_of_request)
         })
   .then(response => {
         console.log(response.json())
