@@ -100,7 +100,7 @@ function getProgressCod(){
         "string_character": string_character,
     }
     function fetchRequest () {
-        fetch('generate_data', {
+        fetch('https://testjulishcherbina.herokuapp.com/generate_data', {
             method: 'post',
             headers:{
                 "X-CSRFToken": token,
