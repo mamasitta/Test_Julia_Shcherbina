@@ -1,22 +1,24 @@
 import ast
 import csv
 import os
+import threading
 from ast import literal_eval
 from datetime import date
 from io import StringIO
 from os.path import join
 
+from celery.result import AsyncResult
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from tes_project.celery import creation_task
+from test_app.task import creation_task
 from django.contrib import auth
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.core.files.base import ContentFile, File
 from django.shortcuts import render, redirect
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 
 # Create your views here.
 
@@ -86,8 +88,6 @@ def create_schema(request):
             if check_was_duplicate:
                 for i in range(100):
                     checking_index = "{}({})".format(schema_name, i + 2)
-                    print(checking_index)
-                    print(i)
                     exist = Schema.objects.filter(schema_name=checking_index, user_create_id=user_id)
                     if not exist:
                         schema_name = checking_index
@@ -122,29 +122,29 @@ def generate_data(request):
     column_separator = data['column_separator']
     # registering dialect for csv
     if column_separator == "Semicolon(;)":
-        if string_character == 'Double-quote(")':
-            csv.register_dialect('myDialect', delimiter=';', quotechar='"', quoting=csv.QUOTE_NONNUMERIC)
-        else:
-            csv.register_dialect('myDialect', delimiter=';', quotechar="'", quoting=csv.QUOTE_NONNUMERIC)
+        delimiter = ';'
     elif column_separator == "Slash(/)":
-        if string_character == 'Double-quote(")':
-            csv.register_dialect('myDialect', delimiter='/', quotechar='"', quoting=csv.QUOTE_NONNUMERIC)
-        else:
-            csv.register_dialect('myDialect', delimiter='/', quotechar="'", quoting=csv.QUOTE_NONNUMERIC)
+        delimiter = '/'
     else:
-        if string_character == 'Double-quote(")':
-            csv.register_dialect('myDialect', delimiter=',', quotechar='"', quoting=csv.QUOTE_NONNUMERIC)
-        else:
-            csv.register_dialect('myDialect', delimiter=',', quotechar="'", quoting=csv.QUOTE_NONNUMERIC)
+        delimiter = ','
+    if string_character == 'Double-quote(")':
+        quotechar = '"'
+    else:
+        quotechar = "'"
     # call Celery to write csv
+    # celery -A tes_project worker -l info -P gevent( use for windows)
     file_path = 'media/uploads/{}.csv'.format(schema_name)
-    creation_task.run(data_to=data_to, file_path=file_path, dialect='myDialect')
-    content = {"massage": 'created'}
-    # saving to db data
+    create = creation_task.delay(data_to=data_to, file_path=file_path, delimiter=delimiter, quotechar=quotechar)
+    x = create.status
+    while x != 'SUCCESS':
+        result = create.status
+        x = result
+        if result == 'FAILURE':
+            return Response(status=status.HTTP_418_IM_A_TEAPOT)
     new_user_schema = Schema(user_create_id=request.user.id, schema=data_to, schema_name=schema_name, generated=True,
-                             modified=date.today(), file_path=file_path)
+                            modified=date.today(), file_path=file_path)
     new_user_schema.save()
-    return Response(content, status=status.HTTP_200_OK)
+    return Response(status=status.HTTP_200_OK)
 
 
 @login_required
@@ -186,6 +186,3 @@ def login(request):
         else:
             return render(request, 'test_app/login.html', {'message': "Invalid username or password"})
     return render(request, "test_app/login.html")
-
-
-

@@ -18,16 +18,6 @@ app.autodiscover_tasks()
 
 @app.task(bind=True)
 def debug_task_test(self, param):
-    return 'The test task executed with argument "%s" ' % param
+    print('Request: {0!r}'.format(self.request))
 
 
-@app.task(bin=True)
-def creation_task(file_path, data_to, dialect):
-    dialect = dialect
-    with open(file_path, "w") as file:
-        writer = csv.writer(file, dialect=dialect)
-        writer.writerow(data_to)
-    file.closed
-    # new_file_obj = CsvStorage(user_create_id=user_id, file_name=schema_name, file_path=file_path)
-    # new_file_obj.save()
-    return redirect("index")

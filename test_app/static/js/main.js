@@ -40,7 +40,6 @@ function PutData (e) {
     tBoxOrder.setAttribute("name", "order"+name_id);
     tBoxOrder.setAttribute('class', "item");
     newCellOrder.appendChild(tBoxOrder)
-    console.log(newCellOrder)
 
     var newCellName = document.createElement("td");
     var tBoxName = document.createElement('input');
@@ -68,7 +67,6 @@ function PutData (e) {
     boxDelete1.innerHTML = "Delete"
     boxDelete.appendChild(boxDelete1)
     newDelete.appendChild(boxDelete)
-    console.log(newDelete)
 
     newRow.append(newCellName, newCellType, newCellRangeFrom, newCellRangeTill, newCellOrder, newDelete);
     document.getElementById("rows").appendChild(newRow);
@@ -101,7 +99,7 @@ function getProgressCod(){
     }
     params = "/?data_to="+data_to+"&name="+name+"&column_separator="+column_separator+"&string_character="+string_character
     function fetchRequest () {
-        fetch('https://testjulishcherbina.herokuapp.com/generate_data'+params, {
+        fetch('http://127.0.0.1:8000/generate_data'+params, {
             method: 'get',
             headers:{
                 "X-CSRFToken": token,
@@ -112,13 +110,10 @@ function getProgressCod(){
 //            body: JSON.stringify(body_of_request)
         })
   .then(response => {
-        console.log(response.json())
       return response
-
   })
   .then(data => {
         if (data.status === 200){
-            console.log(data)
             var sButton = document.getElementById('new_schema_index');
             sButton.setAttribute("style", "background: #5CB85C; color: #FFFFFF;");
             sButton.innerHTML = "Ready";
