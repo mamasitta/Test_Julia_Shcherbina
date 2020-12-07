@@ -3,9 +3,10 @@ from __future__ import absolute_import, unicode_literals
 import csv
 import os
 
-from celery import shared_task, app
+from celery import shared_task, Celery
 
 from tes_project import celery
+app = Celery('tasks', broker='redis://localhost:6379/0')
 
 app.conf.update(BROKER_URL=os.environ['REDIS_URL'],
                 CELERY_RESULT_BACKEND=os.environ['REDIS_URL'])
