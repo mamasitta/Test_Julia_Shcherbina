@@ -109,7 +109,7 @@ def data_sets(request):
     return render(request, "test_app/data_sets.html", {"user_schemas": user_schemas})
 
 
-@api_view(['POST'])
+@api_view(['POST', 'GET'])
 @login_required
 def generate_data(request):
     data = request.data
