@@ -134,13 +134,18 @@ def generate_data(request):
     # call Celery to write csv
     # celery -A tes_project worker -l info -P gevent( use for windows)
     file_path = 'media/uploads/{}.csv'.format(schema_name)
-    create = creation_task.delay(data_to=data_to, file_path=file_path, delimiter=delimiter, quotechar=quotechar)
-    x = create.status
-    while x != 'SUCCESS':
-        result = create.status
-        x = result
-        if result == 'FAILURE':
-            return Response(status=status.HTTP_418_IM_A_TEAPOT)
+
+    creation_task.run(data_to=data_to, file_path=file_path, delimiter=delimiter, quotechar=quotechar)
+    #
+    # code to use for celery deploy when redis run
+    #
+    # create = creation_task.delay(data_to=data_to, file_path=file_path, delimiter=delimiter, quotechar=quotechar)
+    # x = create.status
+    # while x != 'SUCCESS':
+    #     result = create.status
+    #     x = result
+    #     if result == 'FAILURE':
+    #         return Response(status=status.HTTP_418_IM_A_TEAPOT)
     new_user_schema = Schema(user_create_id=request.user.id, schema=data_to, schema_name=schema_name, generated=True,
                             modified=date.today(), file_path=file_path)
     new_user_schema.save()
