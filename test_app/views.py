@@ -165,7 +165,7 @@ def download_schema(request, schema_name):
     schema = to_list(s)
     # writing csv
     response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; filename={}'.format(file)
+    response['Content-Disposition'] = filename = '{}'.format(file)
     writer = csv.writer(response)
     writer.writerow(schema)
 
