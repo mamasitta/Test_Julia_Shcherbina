@@ -21,7 +21,7 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse, JsonResponse
 
 # Create your views here.
-
+# test commit
 # main page
 from test_app.helpers.csv import to_list
 from .models import Schema
